@@ -1,3 +1,10 @@
+###################################################
+# Nelder-Mead Minimization (and a lot more)       #
+# Matheus J. Castro                               #
+# Version 3.4                                     #
+# Last Modification: 06/11/2021 (month/day/year)  #
+###################################################
+
 from scipy.optimize import minimize
 from matplotlib import animation
 import matplotlib.pyplot as plt

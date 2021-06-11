@@ -1,3 +1,10 @@
+###################################################
+# Fake Cosmological Data Generator                #
+# Matheus J. Castro                               #
+# Version 1.2                                     #
+# Last Modification: 06/11/2021 (month/day/year)  #
+###################################################
+
 import numpy as np
 from time import gmtime, strftime
 import snia

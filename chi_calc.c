@@ -1,3 +1,9 @@
+////////////////////////////////////////////////////////
+// Chi Square Calculation and Trapezoidal Integration //
+// Matheus J. Castro                                  //
+// Version 2.3                                        //
+// Last Modification: 06/11/2021 (month/day/year)     //
+////////////////////////////////////////////////////////
 
 #include<stdbool.h>
 #include<stdlib.h>

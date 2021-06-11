@@ -4,6 +4,9 @@ Based on cosmological luminosity distance, this program find the best parameters
 It calculates the chi square between a fake dataset and tworetical result of the calculation of the distance modulus.  
 The script find the best parameters by applying Nelder-Mead Algorithm on chi square function.  
 
+## Integration using the Trapezoidal method
+The C file find the chi square of the cosmological distance modulus, this function includes an integration. The script achieves it by finding the integral result with trapezoidal rule for integration.
+
 ## Example 1
 ![evolution_params_fake_omMcte](evolution_params_fake_omMcte.gif)
 
