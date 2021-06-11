@@ -7,12 +7,12 @@ The script find the best parameters by applying Nelder-Mead Algorithm on chi squ
 ## Example 1
 ![evolution_params_fake_omMcte](evolution_params_fake_omMcte.gif)
 
-![evolution_Nelder_Mead_fake_omMcte](evolution_Nelder_Mead_fake_omMcte.png)!
+![evolution_Nelder_Mead_fake_omMcte](evolution_Nelder_Mead_fake_omMcte.png)
 
 ## Example 2
 ![evolution_params_fake_omEEcte](evolution_params_fake_omEEcte.gif)
 
-![evolution_Nelder_Mead_fake_omEEcte](evolution_Nelder_Mead_fake_omEEcte.png)!
+![evolution_Nelder_Mead_fake_omEEcte](evolution_Nelder_Mead_fake_omEEcte.png)
 
 ## Example 3
 ![evolution_params_fake_wcte](evolution_params_fake_wcte.gif)
