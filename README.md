@@ -13,4 +13,4 @@
 ## Example 3
 ![evolution_params_fake_wcte](evolution_params_fake_wcte.gif)
 
-[evolution_Nelder_Mead_fake_wcte](evolution_Nelder_Mead_fake_wcte.png)!
+![evolution_Nelder_Mead_fake_wcte](evolution_Nelder_Mead_fake_wcte.png)
