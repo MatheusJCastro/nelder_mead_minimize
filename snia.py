@@ -516,7 +516,7 @@ def find_mins(h0, fl_name, c_name, params_array, param0, param1, initial_guess,
               "Mapeamento: x={:.4f}, y={:.4f}\n"
               "Nelder-Mead: x={:.4f}, y={:.4f}\n"
               "Scipy Nelder-Mead: x={:.4f}, y={:.4f}\n"
-              "".format(min_map[0], min_map[1], min_nel[0], min_nel[1], min_sci[0], min_sci[1]))
+              "".format(min_map[1], min_map[0], min_nel[1], min_nel[0], min_sci[1], min_sci[0]))
 
     results = {"Min_Map": min_map,
                "Min_Nelder": min_nel,
