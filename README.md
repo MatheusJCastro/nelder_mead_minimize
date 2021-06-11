@@ -1,5 +1,9 @@
 # Minimization of a function with Nelder-Mead Algorithm
 
+Based on cosmological luminosity distance, this program find the best parameters of matter density, dark energy density and w from equation of state.  
+It calculates the chi square between a fake dataset and tworetical result of the calculation of the distance modulus.  
+The script find the best parameters by applying Nelder-Mead Algorithm on chi square function.  
+
 ## Example 1
 ![evolution_params_fake_omMcte](evolution_params_fake_omMcte.gif)
 
