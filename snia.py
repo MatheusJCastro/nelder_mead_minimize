@@ -7,6 +7,7 @@
 
 from scipy.optimize import minimize
 from matplotlib import animation
+from matplotlib import patches as ptc
 import matplotlib.pyplot as plt
 import numpy as np
 import ctypes
@@ -134,7 +135,7 @@ def read_fl(fl_name):
     return np.loadtxt(fl_name, skiprows=1).T
 
 
-def map_chi(h0, data, params_array, c_lib, fl_name, precision=1E-10):
+def map_chi(h0, data, params_array, c_lib, fl_name, name="", precision=1E-10):
     cte = None
     row_cte = None
     cte_array = None
@@ -163,30 +164,47 @@ def map_chi(h0, data, params_array, c_lib, fl_name, precision=1E-10):
                 params = [i, cte_array[0], j]
             else:
                 params = [i, j, cte_array[0]]
-
             part_map.append(call_c(c_lib, fl_name, h0, params[0], params[1], params[2], precision, len(data[0])))
 
-            # i_ind = np.where(params_array[rows_to_map[0]] == i)[0][0]
-            # j_ind = np.where(params_array[rows_to_map[1]] == j)[0][0]
-            # percent = 100 * i_ind/len(params_array[rows_to_map[0]])
-            # percent += 100 * 1/len(params_array[rows_to_map[0]]) * (j_ind+1)/len(params_array[rows_to_map[1]])
-            # print("Progresso: {:>6.2f}%\t".format(percent))
-
+            i_ind = np.where(params_array[rows_to_map[0]] == i)[0][0]
+            j_ind = np.where(params_array[rows_to_map[1]] == j)[0][0]
+            if j_ind % 200 == 0:
+                percent = 100 * i_ind/len(params_array[rows_to_map[0]])
+                percent += 100 * 1/len(params_array[rows_to_map[0]]) * (j_ind+1)/len(params_array[rows_to_map[1]])
+                print("Progresso: {:>6.2f}%\r".format(percent), end="")
         map_array.append(np.array(part_map))
     map_array = np.array(map_array)
 
     head = "Mapa de chi2"
-    np.savetxt("Map_chi2.csv", map_array, header=head, fmt="%f", delimiter=",")
+    np.savetxt("Map_chi2{}.csv".format(name), map_array, header=head, fmt="%f", delimiter=",")
 
     save_params = [["parametro", "min", "max"],
                    ["omega_m",  params_array[0][0], params_array[0][-1]],
                    ["omega_ee", params_array[1][0], params_array[1][-1]],
                    ["w",        params_array[2][0], params_array[2][-1]]]
     head = "Parâmetros do Mapa de chi2"
-    np.savetxt("Param_map_chi2.csv", save_params, header=head, fmt="%s", delimiter=",")
+    np.savetxt("Param_map_chi2{}.csv".format(name), save_params, header=head, fmt="%s", delimiter=",")
 
 
-def plot_map(data, params, min_chi=None, min_map=None, triangle=None, show=False,
+def cov_elipses(cov):
+    covx_square = cov[0][0]
+    covy_square = cov[1][1]
+    covxy = cov[0][1]
+    covxy_square = cov[0][1]**2
+
+    param_1 = (covx_square+covy_square)/2
+    param_sqrt = np.sqrt((covx_square-covy_square)**2/4 + covxy_square)
+
+    a = np.sqrt(param_1 + param_sqrt)
+    b = np.sqrt(param_1 - param_sqrt)
+
+    theta = np.arctan(2*covxy/(covx_square-covy_square))/2
+    theta = theta * 180/np.pi
+
+    return a, b, theta
+
+
+def plot_map(data, params, cov, min_chi=None, min_map=None, triangle=None, show=False,
              save=False, name=""):
     if params[0][0] == params[0][1]:
         im_range = [params[2][0], params[2][1], params[1][0], params[1][1]]
@@ -201,13 +219,26 @@ def plot_map(data, params, min_chi=None, min_map=None, triangle=None, show=False
         xlab = "\u03a9\u2091\u2091"
         ylab = "\u03a9\u2098"
 
-    plt.figure(figsize=(16, 9))
+    fig = plt.figure(figsize=(16, 9))
+    ax = fig.add_subplot(111)
 
     plt.title("Mapeamento do \u03c7\u00b2", fontsize=18)
     plt.xlabel(xlab, fontsize=20)
     plt.ylabel(ylab, fontsize=20)
 
-    plt.imshow(data, origin="lower", extent=im_range, aspect="auto", interpolation="none", cmap="Spectral")
+    # for i in range(len(data)):
+    #     for j in range(len(data[0])):
+    #         if data[i][j] > 11.8+min_value:
+    #             data[i][j] = 4
+    #         elif data[i][j] > 6.17+min_value:
+    #             data[i][j] = 3
+    #         elif data[i][j] > 2.3+min_value:
+    #             data[i][j] = 2
+    #         else:
+    #             data[i][j] = 1
+
+    plt.imshow(data, origin="lower", extent=im_range, aspect="auto", interpolation="none",
+               cmap="Spectral")
     plt.colorbar()
 
     if min_chi is not None:
@@ -218,10 +249,19 @@ def plot_map(data, params, min_chi=None, min_map=None, triangle=None, show=False
         triangle = np.append(triangle, [triangle[0]], axis=0).T
         plt.plot(triangle[0], triangle[1], "-", c="black", label="nelder-mead")
 
+    a, b, theta = cov_elipses(cov)
+    alphas = [1.52, 2.48, 3.44]
+    lines = ["-", "--", "-."]
+
+    for i in range(len(alphas)):
+        e = ptc.Ellipse((min_chi[1], min_chi[0]), alphas[i]*a, alphas[i]*b, theta, ls=lines[i], zorder=5,
+                        fill=False, label=r"{}$\sigma$".format(i+1))
+        ax.add_patch(e)
+
     plt.legend(loc="upper right", bbox_to_anchor=(1, 1))
 
     if save:
-        plt.savefig("Mapeamento_chi2{}".format(name))
+        plt.savefig("mapping_chi2{}".format(name))
     if show:
         plt.show()
     plt.close()
@@ -304,9 +344,22 @@ def plot_mead(data, params, all_dots, save=False, show=False, name=""):
     plt.close()
 
 
-def open_map(fl_data, fl_param):
-    data = np.loadtxt(fl_data, skiprows=1, delimiter=",")
-    params = np.loadtxt(fl_param, skiprows=2, delimiter=",", dtype="str").T[1:3].T.astype(np.float)
+def all_plots(evolution_dots, mins, cov, name="", save=True, show=False):
+    print("Plotando Resultados {}.".format(name[1:]))
+
+    min_nel = mins["Min_Nelder"]
+    min_map = mins["Min_Map"]
+
+    mapped, params = open_map("Map_chi2", "Param_map_chi2", name=name)
+    plot_map(mapped, params, cov, min_chi=min_nel, min_map=min_map, save=save, show=show, name=name)
+    plot_mead(mapped, params, evolution_dots, save=save, show=show, name=name)
+    plot_movie(mapped, params, evolution_dots, save_mp4=save, show=show, name=name)
+
+
+def open_map(fl_data, fl_param, name=""):
+    data = np.loadtxt("{}{}.csv".format(fl_data, name), skiprows=1, delimiter=",")
+    params = np.loadtxt("{}{}.csv".format(fl_param, name), skiprows=2,
+                        delimiter=",", dtype="str").T[1:3].T.astype(np.float)
 
     return data, params
 
@@ -450,15 +503,16 @@ def opt_nelder_mead(f, init, eps_desired=1E-5):
     all_centroids = []
     for i in all_dots:
         all_centroids.append(sum(i) / len(dots))
+    all_centroids = np.array(all_centroids)
 
     c = all_centroids[-1]
 
     return c, all_dots, all_centroids
 
 
-def find_mins(h0, fl_name, c_name, params_array, param0, param1, initial_guess,
-              remap=False, integ_precsicion=1E-5, nelder_precision=1E-5,
-              plots=False, name=""):
+def find_mins(h0, fl_name, c_lib, params_array, param0, param1, initial_guess,
+              remap=False, integ_precision=1E-5, nelder_precision=1E-5,
+              prints=False, name=""):
     # Argumentos:
     # h0 -> constante de hubble;
     # fl_name -> nome do arquivo de dados
@@ -474,7 +528,6 @@ def find_mins(h0, fl_name, c_name, params_array, param0, param1, initial_guess,
     # plots -> plotar ou não os gráficos
 
     data = read_fl(fl_name)
-    c_lib = config_c_call(c_name)
 
     def call_c_red(xy):
         if params_array[0][0] != params_array[0][-1]:
@@ -490,35 +543,32 @@ def find_mins(h0, fl_name, c_name, params_array, param0, param1, initial_guess,
             omEE = xy[0]
             W = xy[1]
 
-        return call_c(c_lib, fl_name, h0, omM, omEE, W, integ_precsicion, len(data[0]))
+        return call_c(c_lib, fl_name, h0, omM, omEE, W, integ_precision, len(data[0]))
 
     if remap:
         print("Mapeando o chi2;")
-        map_chi(h0, data, params_array, c_lib, fl_name, precision=integ_precsicion)
+        map_chi(h0, data, params_array, c_lib, fl_name, precision=integ_precision, name=name)
 
     try:
-        mapped, params = open_map("Map_chi2.csv", "Param_map_chi2.csv")
+        mapped, params = open_map("Map_chi2", "Param_map_chi2", name=name)
     except OSError:
-        sys.exit("Arquivo Map_chi2.csv não encontrado, coloque a opção remap=True")
+        sys.exit("Arquivo Map_chi2{}.csv não encontrado, coloque a opção remap=True".format(name))
 
     print("Achando o mínimo do mapeamento;")
     min_map = np.where(mapped == np.min(mapped))
     min_map = [param1[min_map[0][0]], param0[min_map[1][0]]]
 
     print("Achando o mínimo do algorítimo de Nelder-Mead;")
-    min_nel, evolution_dots, envolution_min = opt_nelder_mead(call_c_red,
-                                                              initial_guess,
-                                                              eps_desired=nelder_precision)
+    min_nel, evolution_dots, evolution_min = opt_nelder_mead(call_c_red,
+                                                             initial_guess,
+                                                             eps_desired=nelder_precision)
+    evol = evolution_min.T
+    cov = np.cov(np.stack((evol[1], evol[0]), axis=0))
 
     print("Achando o mínimo do algorítimo de Nelder-Mead pelo SciPy;")
     min_sci = minimize(call_c_red, np.array(initial_guess), method='nelder-mead').x
 
-    if plots:
-        print("Plotando Resultados.")
-        plot_map(mapped, params, min_chi=min_nel, min_map=min_map, save=True, name=name)
-        plot_mead(mapped, params, evolution_dots, save=True, name=name)
-        plot_movie(mapped, params, evolution_dots, save_mp4=True, name=name)
-
+    if prints:
         print("Comparação dos resultados:\n"
               "Mapeamento: x={:.4f}, y={:.4f}\n"
               "Nelder-Mead: x={:.4f}, y={:.4f}\n"
@@ -529,58 +579,81 @@ def find_mins(h0, fl_name, c_name, params_array, param0, param1, initial_guess,
                "Min_Nelder": min_nel,
                "Min_SciPy": min_sci}
 
-    return results
+    return results, evolution_dots, cov
 
 
 def main():
     fl_name = "fake_data.cat"
     c_name = "chi.so.1"
     h0 = 70
+    map_len = 1000
+
+    c_dll = config_c_call(c_name)
+
+    names = []
+    all_mins = []
+    all_dots = []
+    all_covs = []
 
     # w constante
-    omega_ee = np.linspace(0, 1, 50)
-    omega_m = np.linspace(0, 1, 50)
-    w = -np.ones(50)
+    print("w constante")
+    names.append("_fake_wcte")
+    omega_ee = np.linspace(0, 1, map_len)
+    omega_m = np.linspace(0, 1, map_len)
+    w = -np.ones(map_len)
     params_array = np.array([omega_m, omega_ee, w])
 
-    initial_guess = [0.8, 0.2]
+    initial_guess = [0.8, 0.2]  # omega_m, omega_ee
 
-    mins_w = find_mins(h0, fl_name, c_name, params_array, omega_ee, omega_m,
-                       initial_guess, remap=True, plots=True, name="_fake_wcte")
+    mins_w, evol_w, cov_w = find_mins(h0, fl_name, c_dll, params_array, omega_ee, omega_m,
+                                      initial_guess, remap=False, prints=False, name=names[0])
+    all_mins.append(mins_w)
+    all_dots.append(evol_w)
+    all_covs.append(cov_w)
 
     # omega_m constante
-    omega_ee = np.linspace(0, 1, 50)
-    omega_m = 0.3 * np.ones(50)
-    w = np.linspace(-2, 0, 50)
+    print("omega_m constante")
+    names.append("_fake_omMcte")
+    omega_ee = np.linspace(0, 1, map_len)
+    omega_m = 0.3 * np.ones(map_len)
+    w = np.linspace(-2, 0, map_len)
     params_array = np.array([omega_m, omega_ee, w])
 
-    initial_guess = [0.5, -0.5]
+    initial_guess = [0.5, -0.5]  # omega_ee, w
 
-    mins_omM = find_mins(h0, fl_name, c_name, params_array, w, omega_ee, initial_guess,
-                         remap=True, plots=True, name="_fake_omMcte")
+    mins_omM, evol_omM, cov_omM = find_mins(h0, fl_name, c_dll, params_array, w, omega_ee,
+                                            initial_guess, remap=False, prints=False, name=names[1])
+    all_mins.append(mins_omM)
+    all_dots.append(evol_omM)
+    all_covs.append(cov_omM)
 
     # omega_ee constante
-    omega_ee = 0.7 * np.ones(50)
-    omega_m = np.linspace(0, 1, 50)
-    w = np.linspace(-2, 0, 50)
+    print("omega_ee constante")
+    names.append("_fake_omEEcte")
+    omega_ee = 0.7 * np.ones(map_len)
+    omega_m = np.linspace(0, 1, map_len)
+    w = np.linspace(-2, 0, map_len)
     params_array = np.array([omega_m, omega_ee, w])
 
-    initial_guess = [0.5, -0.5]
+    initial_guess = [0.5, -0.5]  # omega_m, w
 
-    mins_omEE = find_mins(h0, fl_name, c_name, params_array, w, omega_m, initial_guess,
-                          remap=True, plots=True, name="_fake_omEEcte")
+    mins_omEE, evol_omEE, cov_omEE = find_mins(h0, fl_name, c_dll, params_array, w, omega_m,
+                                               initial_guess, remap=False, prints=False, name=names[2])
+    all_mins.append(mins_omEE)
+    all_dots.append(evol_omEE)
+    all_covs.append(cov_omEE)
 
     # todos variaveis
+    print("Todas variáveis")
     data = read_fl(fl_name)
-    c_lib = config_c_call(c_name)
 
     def call_c_red_3(xyz):
         omM = xyz[0]
         omEE = xyz[1]
         W = xyz[2]
-        return call_c(c_lib, fl_name, h0, omM, omEE, W, 1E-5, len(data[0]))
+        return call_c(c_dll, fl_name, h0, omM, omEE, W, 1E-5, len(data[0]))
 
-    initial_guess = [0.5, 0.5, -0.5]
+    initial_guess = [0.5, 0.5, -0.5]  # omega_m, omega_ee, w
 
     min_nel, evolution_dots, envolution_min = opt_nelder_mead(call_c_red_3, initial_guess)
     min_sci = minimize(call_c_red_3, np.array(initial_guess), method='nelder-mead').x
@@ -588,8 +661,7 @@ def main():
     mins_var = {"Min_Nelder": min_nel,
                 "Min_SciPy": min_sci}
 
-    print(mins_var)
-
+    # salvando os mínimos
     head = "param constante, método, valor x, valor y, valor z"
     text = ""
 
@@ -607,6 +679,9 @@ def main():
                 "".format(i, mins_var[i][0], mins_var[i][1], mins_var[i][2])
 
     np.savetxt("Minimos_fake_data.csv", [text], header=head, fmt="%s")
+
+    for i in range(len(all_mins)):
+        all_plots(all_dots[i], all_mins[i], all_covs[i], name=names[i])
 
 
 if __name__ == '__main__':

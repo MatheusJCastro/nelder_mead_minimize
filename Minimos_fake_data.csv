@@ -1,11 +1,11 @@
 # param constante, método, valor x, valor y, valor z
-    w=-1, Min_Map   ,  0.71429,  0.30612,       -1
+    w=-1, Min_Map   ,  0.70070,  0.30030,       -1
     w=-1, Min_Nelder,  0.70004,  0.30003,       -1
     w=-1, Min_SciPy ,  0.70004,  0.30002,       -1
- omM=0.3, Min_Map   , -1.14286,  0.59184,      0.3
+ omM=0.3, Min_Map   , -0.99499,  0.70470,      0.3
  omM=0.3, Min_Nelder, -1.00023,  0.69978,      0.3
  omM=0.3, Min_SciPy , -1.00020,  0.69982,      0.3
-omEE=0.7, Min_Map   , -0.97959,  0.28571,      0.7
+omEE=0.7, Min_Map   , -0.99900,  0.29930,      0.7
 omEE=0.7, Min_Nelder, -1.00004,  0.30003,      0.7
 omEE=0.7, Min_SciPy , -1.00007,  0.30004,      0.7
     none, Min_Nelder,  0.30003,  0.69966, -1.00040
