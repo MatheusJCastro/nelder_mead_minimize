@@ -619,7 +619,7 @@ def main():
     w = np.linspace(-2, 0, map_len)
     params_array = np.array([omega_m, omega_ee, w])
 
-    initial_guess = [0.5, -0.5]  # omega_ee, w
+    initial_guess = [0.2, -1.5]  # omega_ee, w
 
     mins_omM, evol_omM, cov_omM = find_mins(h0, fl_name, c_dll, params_array, w, omega_ee,
                                             initial_guess, remap=False, prints=False, name=names[1])
