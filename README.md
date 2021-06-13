@@ -22,7 +22,7 @@ The C file find the chi square of the cosmological distance modulus, this functi
 ![evolution_Nelder_Mead_fake_omEEcte](evolution_Nelder_Mead_fake_omEEcte.png)
 
 ## Example 3
-![evolution_Nelder_Mead_fake_omMcte](mapping_chi2_fake_omwcte.png)
+![evolution_Nelder_Mead_fake_omMcte](mapping_chi2_fake_wcte.png)
 
 ![evolution_params_fake_wcte](evolution_params_fake_wcte.gif)
 
