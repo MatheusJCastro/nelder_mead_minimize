@@ -135,7 +135,7 @@ def read_fl(fl_name):
     return np.loadtxt(fl_name, skiprows=1).T
 
 
-def map_chi(h0, data, params_array, c_lib, fl_name, name="", precision=1E-10):
+def map_chi(h0, data, params_array, c_lib, fl_name, name="", precision=1E-10, prior=False):
     cte = None
     row_cte = None
     cte_array = None
@@ -164,7 +164,8 @@ def map_chi(h0, data, params_array, c_lib, fl_name, name="", precision=1E-10):
                 params = [i, cte_array[0], j]
             else:
                 params = [i, j, cte_array[0]]
-            part_map.append(call_c(c_lib, fl_name, h0, params[0], params[1], params[2], precision, len(data[0])))
+            part_map.append(call_c(c_lib, fl_name, h0, params[0], params[1], params[2], precision, len(data[0]),
+                                   prior=prior))
 
             i_ind = np.where(params_array[rows_to_map[0]] == i)[0][0]
             j_ind = np.where(params_array[rows_to_map[1]] == j)[0][0]
@@ -183,6 +184,36 @@ def map_chi(h0, data, params_array, c_lib, fl_name, name="", precision=1E-10):
                    ["omega_ee", params_array[1][0], params_array[1][-1]],
                    ["w",        params_array[2][0], params_array[2][-1]]]
     head = "Parâmetros do Mapa de chi2"
+    np.savetxt("Param_map_chi2{}.csv".format(name), save_params, header=head, fmt="%s", delimiter=",")
+
+
+def map_chi_d(h0, data, omega_m, omega_ee, w, c_lib, fl_name, name="", precision=1E-10):
+    map_array = []  # mapa do chi2
+    for i in range(len(omega_m)):  # para cada linha que tem as variaveis
+        part_map = []  # cada linha do mapa
+        for j in w:
+            # adiciona os dados das variaveis na linha
+            part_map.append(call_c(c_lib, fl_name, h0, omega_m[i], omega_ee[i], j, precision, len(data[0])))
+
+            j_ind = np.where(w == j)[0][0]
+            if j_ind % 200 == 0:
+                percent = 100 * i/len(omega_m)
+                percent += 100 * 1/len(omega_m) * (j_ind+1)/len(w)
+                print("Progresso: {:>6.2f}%\r".format(percent), end="")
+
+        map_array.append(np.array(part_map))  # adiciona linha no mapa
+    map_array = np.array(map_array)  # transforma mapa de lista para array
+
+    head = "Mapa de chi2"
+    np.savetxt("Map_chi2{}.csv".format(name), map_array, header=head, fmt="%f", delimiter=",")  # salva mapa num arquivo
+
+    # range de valores usados para construir o mapa de chi2
+    save_params = [["parametro", "min", "max"],
+                   ["omega_m",  omega_m[0], omega_m[-1]],
+                   ["omega_ee", omega_ee[0], omega_ee[-1]],
+                   ["w",        w[0], w[-1]]]
+    head = "Parâmetros do Mapa de chi2"
+    # salvando esses valores
     np.savetxt("Param_map_chi2{}.csv".format(name), save_params, header=head, fmt="%s", delimiter=",")
 
 
@@ -205,12 +236,12 @@ def cov_elipses(cov):
 
 
 def plot_map(data, params, cov, min_chi=None, min_map=None, triangle=None, show=False,
-             save=False, name=""):
+             save=False, name="", d=False):
     if params[0][0] == params[0][1]:
         im_range = [params[2][0], params[2][1], params[1][0], params[1][1]]
         xlab = "w"
         ylab = "\u03a9\u2091\u2091"
-    elif params[1][0] == params[1][1]:
+    elif params[1][0] == params[1][1] or d:
         im_range = [params[2][0], params[2][1], params[0][0], params[0][1]]
         xlab = "w"
         ylab = "\u03a9\u2098"
@@ -225,6 +256,8 @@ def plot_map(data, params, cov, min_chi=None, min_map=None, triangle=None, show=
     plt.title("Mapeamento do \u03c7\u00b2", fontsize=18)
     plt.xlabel(xlab, fontsize=20)
     plt.ylabel(ylab, fontsize=20)
+    plt.xlim(im_range[0], im_range[1])
+    plt.ylim(im_range[2], im_range[3])
 
     # min_data = np.min(data)
     # for i in range(len(data)):
@@ -268,12 +301,12 @@ def plot_map(data, params, cov, min_chi=None, min_map=None, triangle=None, show=
     plt.close()
 
 
-def plot_movie(data, params, all_dots, save_mp4=False, show=False, name=""):
+def plot_movie(data, params, all_dots, save_mp4=False, show=False, name="", d=False):
     if params[0][0] == params[0][1]:
         im_range = [params[2][0], params[2][1], params[1][0], params[1][1]]
         xlab = "w"
         ylab = "\u03a9\u2091\u2091"
-    elif params[1][0] == params[1][1]:
+    elif params[1][0] == params[1][1] or d:
         im_range = [params[2][0], params[2][1], params[0][0], params[0][1]]
         xlab = "w"
         ylab = "\u03a9\u2098"
@@ -310,12 +343,12 @@ def plot_movie(data, params, all_dots, save_mp4=False, show=False, name=""):
     plt.close()
 
 
-def plot_mead(data, params, all_dots, save=False, show=False, name=""):
+def plot_mead(data, params, all_dots, save=False, show=False, name="", d=False):
     if params[0][0] == params[0][1]:
         im_range = [params[2][0], params[2][1], params[1][0], params[1][1]]
         xlab = "w"
         ylab = "\u03a9\u2091\u2091"
-    elif params[1][0] == params[1][1]:
+    elif params[1][0] == params[1][1] or d:
         im_range = [params[2][0], params[2][1], params[0][0], params[0][1]]
         xlab = "w"
         ylab = "\u03a9\u2098"
@@ -345,16 +378,16 @@ def plot_mead(data, params, all_dots, save=False, show=False, name=""):
     plt.close()
 
 
-def all_plots(evolution_dots, mins, cov, name="", save=True, show=False):
+def all_plots(evolution_dots, mins, cov, name="", save=True, show=False, d=False):
     print("Plotando Resultados {}.".format(name[1:]))
 
     min_nel = mins["Min_Nelder"]
     min_map = mins["Min_Map"]
 
     mapped, params = open_map("Map_chi2", "Param_map_chi2", name=name)
-    plot_map(mapped, params, cov, min_chi=min_nel, min_map=min_map, save=save, show=show, name=name)
-    plot_mead(mapped, params, evolution_dots, save=save, show=show, name=name)
-    plot_movie(mapped, params, evolution_dots, save_mp4=save, show=show, name=name)
+    plot_map(mapped, params, cov, min_chi=min_nel, min_map=min_map, save=save, show=show, name=name, d=d)
+    plot_mead(mapped, params, evolution_dots, save=save, show=show, name=name, d=d)
+    plot_movie(mapped, params, evolution_dots, save_mp4=save, show=show, name=name, d=d)
 
 
 def open_map(fl_data, fl_param, name=""):
@@ -379,13 +412,17 @@ def config_c_call(c_name):
     return c_lib
 
 
-def call_c(c_lib, fl_name, h0, omega_m, omega_ee, w, precision, nrows):
+def call_c(c_lib, fl_name, h0, omega_m, omega_ee, w, precision, nrows, prior=False):
     # Subrotina que executa a subrotina em questão no C
     chi2 = c_lib.main_execution(fl_name.encode("utf-8"),
                                 h0, omega_m, omega_ee,
                                 w, precision,
                                 nrows)
-    return chi2
+    if not prior:
+        return chi2
+    # se tiver prior omega_k = -0.06 +- 0.05 para os parametros
+    else:
+        return chi2 + ((1 - omega_m - omega_ee + 0.06) ** 2 / (0.05 ** 2))
 
 
 def opt_nelder_mead(f, init, eps_desired=1E-5):
@@ -529,8 +566,8 @@ def find_uncert(cov, mins, name=""):
         # left, right, bottom, top
         lims.append(np.array([xmin, xmax, ymin, ymax]))
 
-        mean_x = np.mean([xmax-mins[1], mins[1]-xmin])
-        mean_y = np.mean([ymax - mins[0], mins[0] - ymin])
+        mean_x = np.abs(np.mean([xmax-mins[1], mins[1]-xmin]))
+        mean_y = np.abs(np.mean([ymax - mins[0], mins[0] - ymin]))
         save += "{}, {:.2e}, {:.2e}, {:.2e}, {:.2e}\n".format(i+1, mins[1], mean_x, mins[0], mean_y)
 
         if i == 0:
@@ -545,7 +582,7 @@ def find_uncert(cov, mins, name=""):
 
 def find_mins(h0, fl_name, c_lib, params_array, param0, param1, initial_guess,
               remap=False, integ_precision=1E-5, nelder_precision=1E-5,
-              prints=False, name=""):
+              prints=False, name="", d=False, prior=False):
     # Argumentos:
     # h0 -> constante de hubble;
     # fl_name -> nome do arquivo de dados
@@ -575,12 +612,20 @@ def find_mins(h0, fl_name, c_lib, params_array, param0, param1, initial_guess,
             omM = params_array[0][0]
             omEE = xy[0]
             W = xy[1]
+        if d:
+            omM = xy[0]
+            omEE = 1-xy[0]
+            W = xy[1]
 
-        return call_c(c_lib, fl_name, h0, omM, omEE, W, integ_precision, len(data[0]))
+        return call_c(c_lib, fl_name, h0, omM, omEE, W, integ_precision, len(data[0]), prior=prior)
 
     if remap:
         print("Mapeando o chi2;")
-        map_chi(h0, data, params_array, c_lib, fl_name, precision=integ_precision, name=name)
+        if not d:
+            map_chi(h0, data, params_array, c_lib, fl_name, precision=integ_precision, name=name, prior=prior)
+        else:
+            map_chi_d(h0, data, params_array[0], params_array[1], params_array[2],
+                      c_lib, fl_name, precision=integ_precision, name=name)
 
     try:
         mapped, params = open_map("Map_chi2", "Param_map_chi2", name=name)
@@ -599,7 +644,7 @@ def find_mins(h0, fl_name, c_lib, params_array, param0, param1, initial_guess,
     cov = np.cov(np.stack((evol[1], evol[0]), axis=0))
 
     print("Achando o mínimo do algorítimo de Nelder-Mead pelo SciPy;")
-    min_sci = minimize(call_c_red, np.array(initial_guess), method='nelder-mead').x
+    min_sci = minimize(call_c_red, np.array(initial_guess), method='Nelder-Mead').x
 
     print("Calculando Incertezas;")
     lims, meanxy = find_uncert(cov, min_nel, name=name)
@@ -723,5 +768,29 @@ def main():
         all_plots(all_dots[i], all_mins[i], all_covs[i], name=names[i])
 
 
+def item_d():
+    fl_name = "SN_2021.cat"
+    c_name = "chi.so.1"
+    h0 = 70
+    map_len = 200
+
+    c_dll = config_c_call(c_name)
+
+    name_omEE = "_itemd"
+    omega_m = np.linspace(0, 1, map_len)
+    omega_ee = 1 - omega_m
+    w = np.linspace(-2, 0, map_len)
+    params_array = np.array([omega_m, omega_ee, w])
+
+    initial_guess = [0.4, -0.5]  # omega_m, w
+
+    mins_w, evol_w, cov_w = find_mins(h0, fl_name, c_dll, params_array, w, omega_m,
+                                      initial_guess, remap=False, prints=True, name=name_omEE,
+                                      d=True)
+
+    all_plots(evol_w, mins_w, cov_w, name=name_omEE, save=True, d=True)
+
+
 if __name__ == '__main__':
-    main()
+    #main()
+    item_d()
