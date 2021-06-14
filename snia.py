@@ -195,8 +195,8 @@ def cov_elipses(cov):
     param_1 = (covx_square+covy_square)/2
     param_sqrt = np.sqrt((covx_square-covy_square)**2/4 + covxy_square)
 
-    a = np.sqrt(param_1 + param_sqrt)
-    b = np.sqrt(param_1 - param_sqrt)
+    a = 2*np.sqrt(param_1 + param_sqrt)
+    b = 2*np.sqrt(param_1 - param_sqrt)
 
     theta = np.arctan(2*covxy/(covx_square-covy_square))/2
     theta = theta * 180/np.pi
@@ -226,13 +226,14 @@ def plot_map(data, params, cov, min_chi=None, min_map=None, triangle=None, show=
     plt.xlabel(xlab, fontsize=20)
     plt.ylabel(ylab, fontsize=20)
 
+    # min_data = np.min(data)
     # for i in range(len(data)):
     #     for j in range(len(data[0])):
-    #         if data[i][j] > 11.8+min_value:
+    #         if data[i][j] > 11.8+min_data:
     #             data[i][j] = 4
-    #         elif data[i][j] > 6.17+min_value:
+    #         elif data[i][j] > 6.17+min_data:
     #             data[i][j] = 3
-    #         elif data[i][j] > 2.3+min_value:
+    #         elif data[i][j] > 2.3+min_data:
     #             data[i][j] = 2
     #         else:
     #             data[i][j] = 1
@@ -510,6 +511,38 @@ def opt_nelder_mead(f, init, eps_desired=1E-5):
     return c, all_dots, all_centroids
 
 
+def find_uncert(cov, mins, name=""):
+    a, b, theta = cov_elipses(cov)
+    alphas = [1.52, 2.48, 3.44]
+
+    lims = []
+    save = ""
+    meanxy = None
+
+    for i in range(len(alphas)):
+        xmax = mins[1] + alphas[i]*a*np.cos(theta*np.pi/180)/2
+        ymax = mins[0] + alphas[i]*a*np.sin(theta*np.pi/180)/2
+
+        xmin = mins[1] - alphas[i]*a*np.cos(theta*np.pi/180)/2
+        ymin = mins[0] - alphas[i]*a*np.sin(theta*np.pi/180)/2
+
+        # left, right, bottom, top
+        lims.append(np.array([xmin, xmax, ymin, ymax]))
+
+        mean_x = np.mean([xmax-mins[1], mins[1]-xmin])
+        mean_y = np.mean([ymax - mins[0], mins[0] - ymin])
+        save += "{}, {:.2e}, {:.2e}, {:.2e}, {:.2e}\n".format(i+1, mins[1], mean_x, mins[0], mean_y)
+
+        if i == 0:
+            meanxy = [mean_y, mean_x]
+    lims = np.array(lims)
+
+    head = "sigma, x, sig_x, y, sig_y"
+    np.savetxt("Minimo_Nelder_Incerteza{}.csv".format(name), [save], header=head, fmt="%s")
+
+    return lims, meanxy
+
+
 def find_mins(h0, fl_name, c_lib, params_array, param0, param1, initial_guess,
               remap=False, integ_precision=1E-5, nelder_precision=1E-5,
               prints=False, name=""):
@@ -562,22 +595,28 @@ def find_mins(h0, fl_name, c_lib, params_array, param0, param1, initial_guess,
     min_nel, evolution_dots, evolution_min = opt_nelder_mead(call_c_red,
                                                              initial_guess,
                                                              eps_desired=nelder_precision)
-    evol = evolution_min.T
+    evol = evolution_min[2:].T
     cov = np.cov(np.stack((evol[1], evol[0]), axis=0))
 
     print("Achando o mínimo do algorítimo de Nelder-Mead pelo SciPy;")
     min_sci = minimize(call_c_red, np.array(initial_guess), method='nelder-mead').x
 
+    print("Calculando Incertezas;")
+    lims, meanxy = find_uncert(cov, min_nel, name=name)
+
     if prints:
         print("Comparação dos resultados:\n"
               "Mapeamento: x={:.4f}, y={:.4f}\n"
-              "Nelder-Mead: x={:.4f}, y={:.4f}\n"
+              "Nelder-Mead: x={:.4e}+/-{:.4e}, y={:.4e}+/-{:.4e}\n"
               "Scipy Nelder-Mead: x={:.4f}, y={:.4f}\n"
-              "".format(min_map[1], min_map[0], min_nel[1], min_nel[0], min_sci[1], min_sci[0]))
+              "".format(min_map[1], min_map[0],
+                        min_nel[1], meanxy[1],
+                        min_nel[0], meanxy[0],
+                        min_sci[1], min_sci[0]))
 
     results = {"Min_Map": min_map,
-               "Min_Nelder": min_nel,
-               "Min_SciPy": min_sci}
+               "Min_SciPy": min_sci,
+               "Min_Nelder": min_nel}
 
     return results, evolution_dots, cov
 
@@ -603,10 +642,10 @@ def main():
     w = -np.ones(map_len)
     params_array = np.array([omega_m, omega_ee, w])
 
-    initial_guess = [0.8, 0.2]  # omega_m, omega_ee
+    initial_guess = [0.4, 0.4]  # omega_m, omega_ee
 
-    mins_w, evol_w, cov_w = find_mins(h0, fl_name, c_dll, params_array, omega_ee, omega_m,
-                                      initial_guess, remap=False, prints=False, name=names[0])
+    mins_w, evol_w, cov_w, = find_mins(h0, fl_name, c_dll, params_array, omega_ee, omega_m,
+                                       initial_guess, remap=False, prints=False, name=names[0])
     all_mins.append(mins_w)
     all_dots.append(evol_w)
     all_covs.append(cov_w)
@@ -619,7 +658,7 @@ def main():
     w = np.linspace(-2, 0, map_len)
     params_array = np.array([omega_m, omega_ee, w])
 
-    initial_guess = [0.2, -1.5]  # omega_ee, w
+    initial_guess = [0.4, -1.3]  # omega_ee, w
 
     mins_omM, evol_omM, cov_omM = find_mins(h0, fl_name, c_dll, params_array, w, omega_ee,
                                             initial_guess, remap=False, prints=False, name=names[1])
@@ -635,7 +674,7 @@ def main():
     w = np.linspace(-2, 0, map_len)
     params_array = np.array([omega_m, omega_ee, w])
 
-    initial_guess = [0.5, -0.5]  # omega_m, w
+    initial_guess = [0.4, -0.5]  # omega_m, w
 
     mins_omEE, evol_omEE, cov_omEE = find_mins(h0, fl_name, c_dll, params_array, w, omega_m,
                                                initial_guess, remap=False, prints=False, name=names[2])
