@@ -1,0 +1,5 @@
+# Parâmetros do Mapa de chi2
+parametro,min,max
+omega_m,0.0,1.0
+omega_ee,1.0,0.0
+w,-2.0,0.0

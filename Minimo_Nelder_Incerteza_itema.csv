@@ -1,0 +1,7 @@
+# sigma, x, sig_xl, sig_xr
+1, 5.44e-01, 1.62e-02, 1.56e-02
+2, 5.44e-01, 3.27e-02, 3.16e-02
+3, 5.44e-01, 4.97e-02, 4.67e-02
+prob_cumulativa, 0.9999,,
+prob_cumulativa_scipy, 1.0020,,
+

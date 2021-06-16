@@ -5,6 +5,7 @@
 # Last Modification: 06/11/2021 (month/day/year)  #
 ###################################################
 
+from scipy.integrate import quad
 from scipy.optimize import minimize
 from matplotlib import animation
 from matplotlib import patches as ptc
@@ -170,8 +171,8 @@ def map_chi(h0, data, params_array, c_lib, fl_name, name="", precision=1E-10, pr
             i_ind = np.where(params_array[rows_to_map[0]] == i)[0][0]
             j_ind = np.where(params_array[rows_to_map[1]] == j)[0][0]
             if j_ind % 200 == 0:
-                percent = 100 * i_ind/len(params_array[rows_to_map[0]])
-                percent += 100 * 1/len(params_array[rows_to_map[0]]) * (j_ind+1)/len(params_array[rows_to_map[1]])
+                percent = 100 * i_ind / len(params_array[rows_to_map[0]])
+                percent += 100 * 1 / len(params_array[rows_to_map[0]]) * (j_ind + 1) / len(params_array[rows_to_map[1]])
                 print("Progresso: {:>6.2f}%\r".format(percent), end="")
         map_array.append(np.array(part_map))
     map_array = np.array(map_array)
@@ -180,9 +181,9 @@ def map_chi(h0, data, params_array, c_lib, fl_name, name="", precision=1E-10, pr
     np.savetxt("Map_chi2{}.csv".format(name), map_array, header=head, fmt="%f", delimiter=",")
 
     save_params = [["parametro", "min", "max"],
-                   ["omega_m",  params_array[0][0], params_array[0][-1]],
+                   ["omega_m", params_array[0][0], params_array[0][-1]],
                    ["omega_ee", params_array[1][0], params_array[1][-1]],
-                   ["w",        params_array[2][0], params_array[2][-1]]]
+                   ["w", params_array[2][0], params_array[2][-1]]]
     head = "Parâmetros do Mapa de chi2"
     np.savetxt("Param_map_chi2{}.csv".format(name), save_params, header=head, fmt="%s", delimiter=",")
 
@@ -197,8 +198,8 @@ def map_chi_d(h0, data, omega_m, omega_ee, w, c_lib, fl_name, name="", precision
 
             j_ind = np.where(w == j)[0][0]
             if j_ind % 200 == 0:
-                percent = 100 * i/len(omega_m)
-                percent += 100 * 1/len(omega_m) * (j_ind+1)/len(w)
+                percent = 100 * i / len(omega_m)
+                percent += 100 * 1 / len(omega_m) * (j_ind + 1) / len(w)
                 print("Progresso: {:>6.2f}%\r".format(percent), end="")
 
         map_array.append(np.array(part_map))  # adiciona linha no mapa
@@ -209,9 +210,9 @@ def map_chi_d(h0, data, omega_m, omega_ee, w, c_lib, fl_name, name="", precision
 
     # range de valores usados para construir o mapa de chi2
     save_params = [["parametro", "min", "max"],
-                   ["omega_m",  omega_m[0], omega_m[-1]],
+                   ["omega_m", omega_m[0], omega_m[-1]],
                    ["omega_ee", omega_ee[0], omega_ee[-1]],
-                   ["w",        w[0], w[-1]]]
+                   ["w", w[0], w[-1]]]
     head = "Parâmetros do Mapa de chi2"
     # salvando esses valores
     np.savetxt("Param_map_chi2{}.csv".format(name), save_params, header=head, fmt="%s", delimiter=",")
@@ -221,16 +222,16 @@ def cov_elipses(cov):
     covx_square = cov[0][0]
     covy_square = cov[1][1]
     covxy = cov[0][1]
-    covxy_square = cov[0][1]**2
+    covxy_square = cov[0][1] ** 2
 
-    param_1 = (covx_square+covy_square)/2
-    param_sqrt = np.sqrt((covx_square-covy_square)**2/4 + covxy_square)
+    param_1 = (covx_square + covy_square) / 2
+    param_sqrt = np.sqrt((covx_square - covy_square) ** 2 / 4 + covxy_square)
 
-    a = 2*np.sqrt(param_1 + param_sqrt)
-    b = 2*np.sqrt(param_1 - param_sqrt)
+    a = 2 * np.sqrt(param_1 + param_sqrt)
+    b = 2 * np.sqrt(param_1 - param_sqrt)
 
-    theta = np.arctan(2*covxy/(covx_square-covy_square))/2
-    theta = theta * 180/np.pi
+    theta = np.arctan(2 * covxy / (covx_square - covy_square)) / 2
+    theta = theta * 180 / np.pi
 
     return a, b, theta
 
@@ -288,8 +289,8 @@ def plot_map(data, params, cov, min_chi=None, min_map=None, triangle=None, show=
     lines = ["-", "--", "-."]
 
     for i in range(len(alphas)):
-        e = ptc.Ellipse((min_chi[1], min_chi[0]), alphas[i]*a, alphas[i]*b, theta, ls=lines[i], zorder=5,
-                        fill=False, label=r"{}$\sigma$".format(i+1))
+        e = ptc.Ellipse((min_chi[1], min_chi[0]), alphas[i] * a, alphas[i] * b, theta, ls=lines[i], zorder=5,
+                        fill=False, label=r"{}$\sigma$".format(i + 1))
         ax.add_patch(e)
 
     plt.legend(loc="upper right", bbox_to_anchor=(1, 1))
@@ -333,7 +334,7 @@ def plot_movie(data, params, all_dots, save_mp4=False, show=False, name="", d=Fa
         tri = np.append(all_dots[j], [all_dots[j][0]], axis=0).T
         mov.set_data(tri[1], tri[0])
 
-    ani = animation.FuncAnimation(fig, animate, interval=300, frames=len(all_dots)-1)
+    ani = animation.FuncAnimation(fig, animate, interval=300, frames=len(all_dots) - 1)
     plt.legend(loc="upper right", bbox_to_anchor=(1, 1))
 
     if save_mp4:  # salva como mp4
@@ -430,10 +431,10 @@ def opt_nelder_mead(f, init, eps_desired=1E-5):
     dots = [init]
 
     # definicao dos parametros de nelder-mead
-    alpha = 1    # reflexão     (alpha>0)
-    beta = 1/2   # contração    (0<beta<1)
-    gamma = 2    # expansão     (gamma>alpha)
-    delta = 1/2  # encolhimento (0<delta<1)
+    alpha = 1  # reflexão     (alpha>0)
+    beta = 1 / 2  # contração    (0<beta<1)
+    gamma = 2  # expansão     (gamma>alpha)
+    delta = 1 / 2  # encolhimento (0<delta<1)
 
     # array dos vetores unitarios
     e = np.zeros(len(init))
@@ -441,8 +442,8 @@ def opt_nelder_mead(f, init, eps_desired=1E-5):
     # criação do triangulo inicial
     for i in range(len(init)):
         e[i] = e[i] + 1  # vetor unitario do eixo i
-        h = 0.00025 if init[i-1] == 0 else 0.05  # determinação do step a ser dado
-        dots.append(init+h*e)
+        h = 0.00025 if init[i - 1] == 0 else 0.05  # determinação do step a ser dado
+        dots.append(init + h * e)
         e[i] = e[i] - 1  # volta ao vetor e de zeros somente
     dots = np.array(dots)
 
@@ -463,7 +464,7 @@ def opt_nelder_mead(f, init, eps_desired=1E-5):
                 x_higher2 = i
 
         # calcula o centroide do melhor lado
-        c = (sum(dots) - dots[x_higher]) / (len(dots)-1)
+        c = (sum(dots) - dots[x_higher]) / (len(dots) - 1)
 
         # reflexão
         def reflect():
@@ -557,18 +558,18 @@ def find_uncert(cov, mins, name=""):
     meanxy = None
 
     for i in range(len(alphas)):
-        xmax = mins[1] + alphas[i]*a*np.cos(theta*np.pi/180)/2
-        ymax = mins[0] + alphas[i]*a*np.sin(theta*np.pi/180)/2
+        xmax = mins[1] + alphas[i] * a * np.cos(theta * np.pi / 180) / 2
+        ymax = mins[0] + alphas[i] * a * np.sin(theta * np.pi / 180) / 2
 
-        xmin = mins[1] - alphas[i]*a*np.cos(theta*np.pi/180)/2
-        ymin = mins[0] - alphas[i]*a*np.sin(theta*np.pi/180)/2
+        xmin = mins[1] - alphas[i] * a * np.cos(theta * np.pi / 180) / 2
+        ymin = mins[0] - alphas[i] * a * np.sin(theta * np.pi / 180) / 2
 
         # left, right, bottom, top
         lims.append(np.array([xmin, xmax, ymin, ymax]))
 
-        mean_x = np.abs(np.mean([xmax-mins[1], mins[1]-xmin]))
+        mean_x = np.abs(np.mean([xmax - mins[1], mins[1] - xmin]))
         mean_y = np.abs(np.mean([ymax - mins[0], mins[0] - ymin]))
-        save += "{}, {:.2e}, {:.2e}, {:.2e}, {:.2e}\n".format(i+1, mins[1], mean_x, mins[0], mean_y)
+        save += "{}, {:.2e}, {:.2e}, {:.2e}, {:.2e}\n".format(i + 1, mins[1], mean_x, mins[0], mean_y)
 
         if i == 0:
             meanxy = [mean_y, mean_x]
@@ -614,7 +615,7 @@ def find_mins(h0, fl_name, c_lib, params_array, param0, param1, initial_guess,
             W = xy[1]
         if d:
             omM = xy[0]
-            omEE = 1-xy[0]
+            omEE = 1 - xy[0]
             W = xy[1]
 
         return call_c(c_lib, fl_name, h0, omM, omEE, W, integ_precision, len(data[0]), prior=prior)
@@ -768,11 +769,205 @@ def main():
         all_plots(all_dots[i], all_mins[i], all_covs[i], name=names[i])
 
 
+def item_a():
+    fl_name = "SN_2021.cat"
+    c_name = "chi.so.1"
+    h0 = 70  # constante de Hubble
+
+    data = read_fl(fl_name)  # Leitura dos dados de SN_2021.cat
+    c_dll = config_c_call(c_name)
+
+    # Calculando χ² para 1 dimensão
+    def call_c_red_1(x):
+        omEE = x[0]  # Ωee
+        omM = 1 - omEE  # Ωm
+        W = -1  # parâmetro da equação de estado para Universo dominado por energia escura
+
+        return call_c(c_dll, fl_name, h0, omM, omEE, W, 1E-5, len(data[0]))  # cálculo de χ² com a função em C
+
+    # Função densidade de probabilidade P(Ωee)
+    def P(omega_ee):
+
+        # Se Ωee for do tipo array:
+        if type(np.array([])) == type(omega_ee):
+            soma = 0
+            for o in omega_ee:
+                # soma os P(Ωee) = exp(-χ²)
+                soma += np.exp(-call_c_red_1([o]))
+            return [soma]
+        # Se não, retorna direto P(Ωee) = exp(-χ²)
+        else:
+            return np.exp(-call_c_red_1([omega_ee]))
+
+    # método da caçada para encontrar os Ωee dos intervalos de confiança de χ²
+    def searching(f, lims, y, eps_desired=1E-3):
+
+        invert = False
+        if f([lims[1]]) > f([lims[0]]):
+            invert = True
+
+        eps = 1
+        x = lims[0] + (lims[1] - lims[0]) / 2
+
+        while eps > eps_desired:
+            x_old = x
+
+            if f([x]) > y:
+                lims = [lims[0], x] if invert else [x, lims[1]]
+            else:
+                lims = [x, lims[1]] if invert else [lims[0], x]
+
+            x = lims[0] + (lims[1] - lims[0]) / 2
+            eps = np.abs((x - x_old) / x)
+
+        return x
+
+    Omega_ees = np.linspace(0, 1, 1000)  # 100 valores de Ωee igualmente espaçados entre 0 e 1
+    chi2 = []  # χ²
+
+    # calculando χ² variando-se Ωee:
+    for i in Omega_ees:
+        chi2.append(call_c_red_1([i]))
+
+    chi2 = np.array(chi2)  # transformando chi2 em np.array
+
+    initial_guess = [0.5]  # estimativa inicial de Ωee
+
+    min_nel, evolution_dots, evolution_min = opt_nelder_mead(call_c_red_1, initial_guess)  # cálculo do mínimo de χ²
+
+    del_chi = [1, 4, 9]  # Δχ² = [1, 4, 9]: intervalos de confiança
+    err_chi = []  # variável que armazena os erros em χ²
+
+    for i in range(len(del_chi)):
+        chi = call_c_red_1(min_nel) + del_chi[i]  # calcula χ² de cada intervalo de confiança
+        xl = searching(call_c_red_1, [0, min_nel[0]], chi)  # intervalo à esquerda do mínimo χ²
+        xr = searching(call_c_red_1, [min_nel[0], 1], chi)  # intervalo à direita do mínimo χ²
+        err_chi.append(np.array([i + 1, xl, xr]))  # armazena erro em err_chi
+
+    err_chi = np.array(err_chi)  # transformando err_chi em array
+
+    # probabilidade desses dados indicarem que a densidade
+    # da energia escura é maior do que 0.5 :
+    prob_num1 = integral_calc(P, [0.5, 1], eps_desired=1E-3)[0]  # numerador
+    prob_den1 = integral_calc(P, [0, 1], eps_desired=1E-3)[0]  # denominador
+
+    prob_cumulativa1 = prob_num1 / prob_den1  # probabilidade P(Ωee > 0.5)
+
+    # comparando com o resultado das integrais com o módulo scipy
+    prob_num2 = quad(P, 0.5, 1)[0]  # numerador
+    prob_den2 = quad(P, 0, 1)[0]  # denominador
+
+    prob_cumulativa2 = prob_num2 / prob_den2  # probabilidade P(Ωee > 0.5)
+
+    # normalização da P(omega_ee)
+    p = np.exp(-chi2) / prob_den1  # FDP de Ωee
+
+    lines = ['-', '--', '-.']  # tipos das linhas dos intervalos de Δχ²
+    color = ['red', 'green', 'magenta']  # cores das linhas dos intervalos de Δχ²
+    plt.figure(figsize=(16, 9))  # tamanho da figura
+    plt.title(r"Mapeamento de $\chi^2$ em $\Omega_{ee}$", fontsize=18)  # título do gráfico
+    plt.xlabel(r"$\Omega_{ee}$", fontsize=18)  # nome do eixo x
+    plt.ylabel(r"$\chi^2$", fontsize=18)  # nome do eixo y
+    plt.xlim(min(Omega_ees), max(Omega_ees))  # limites do eixo x entre 0 e 1.
+    plt.xticks(np.linspace(min(Omega_ees), max(Omega_ees), 11))
+
+    plt.plot(Omega_ees, chi2, label=r"Curva de $\chi^2$", c='blue')  # plotando curva de χ² x Ωee
+    plt.scatter(min_nel[0], min(chi2), label=r'Min. $\chi^2$', c='black', zorder=10)  # ponto do mínimo χ²
+
+    # linhas dos intervalos de confiança
+    for i in range(len(err_chi)):
+        plt.axvline(err_chi[i][1], ymax=0.2, ls=lines[i], c=color[i], label=r"{:.0f}$\sigma$".format(err_chi[i][0]))
+        plt.axvline(err_chi[i][2], ymax=0.2, ls=lines[i], c=color[i])
+
+    plt.legend()  # legendas
+    plt.grid()  # grade
+
+    plt.savefig("mapping_chi2_itema")  # salvando a imagem da curva
+    plt.close()
+
+    lines = ['-', '--', '-.']  # tipos das linhas dos intervalos de Δχ²
+    color = ['red', 'green', 'magenta']  # cores das linhas dos intervalos de Δχ²
+    plt.figure(figsize=(16, 9))  # tamanho da figura
+    plt.title(r"Probabilidades $P(\Omega_{ee}) \propto exp(-\chi^2)$", fontsize=18)  # título do gráfico
+    plt.xlabel(r"$\Omega_{ee}$", fontsize=18)  # nome do eixo x
+    plt.ylabel(r"$P(\Omega_{ee})$", fontsize=18)  # nome do eixo y
+    plt.xlim(min(Omega_ees), max(Omega_ees))  # limites do eixo x entre 0 e 1.
+    plt.xticks(np.linspace(min(Omega_ees), max(Omega_ees), 11))
+
+    plt.plot(Omega_ees, p, label=r"Curva de FDP $P(\Omega_{ee})$", c='blue')  # plotando curva de P(Ωee) x Ωee
+    plt.scatter(min_nel[0], max(p), label=r'Max. verossimilhança', c='black', zorder=10)  # ponto de máximo de P(Ωee)
+
+    # linhas dos intervalos de confiança
+    for i in range(len(err_chi)):
+        plt.axvline(err_chi[i][1], ymax=0.9, ls=lines[i], c=color[i], label=r"{:.0f}$\sigma$".format(err_chi[i][0]))
+        plt.axvline(err_chi[i][2], ymax=0.9, ls=lines[i], c=color[i])
+
+    plt.legend()  # legendas
+    plt.grid()  # grade
+
+    plt.savefig("fdp_itema")  # salvando a imagem da curva
+    plt.close()
+
+    head = 'sigma, x, sig_xl, sig_xr'  # header do arquivo que armazenará os dados
+    save = ''
+    for i in err_chi:
+        save += '{:.0f}, {:.2e}, {:.2e}, {:.2e}\n'.format(i[0], min_nel[0], min_nel[0] - i[1], i[2] - min_nel[0])
+
+    save += "prob_cumulativa, {:.4f},,\n".format(prob_cumulativa1)
+    save += "prob_cumulativa_scipy, {:.4f},,\n".format(prob_cumulativa2)
+
+    np.savetxt("Minimo_Nelder_Incerteza_itema.csv", [save], header=head, fmt="%s")
+
+
+def item_b():
+    fl_name = "SN_2021.cat"
+    c_name = "chi.so.1"
+    h0 = 70
+    map_len = 500
+
+    c_dll = config_c_call(c_name)
+
+    name_w = "_itemb"
+    omega_ee = np.linspace(0, 1, map_len)
+    omega_m = np.linspace(0, 1, map_len)
+    w = -np.ones(map_len)
+    params_array = np.array([omega_m, omega_ee, w])
+
+    initial_guess = [0.5, 0.3]  # omega_m, omega_ee
+
+    mins_w, evol_w, cov_w = find_mins(h0, fl_name, c_dll, params_array, omega_ee, omega_m,
+                                      initial_guess, remap=False, prints=False, name=name_w, prior=False)
+
+    all_plots(evol_w, mins_w, cov_w, name=name_w, save=True)
+
+
+def item_c():
+    fl_name = "SN_2021.cat"
+    c_name = "chi.so.1"
+    h0 = 70
+    map_len = 500
+
+    c_dll = config_c_call(c_name)
+
+    name_w = "_itemc"
+    omega_ee = np.linspace(0, 1, map_len)
+    omega_m = np.linspace(0, 1, map_len)
+    w = -np.ones(map_len)  # w=-1
+    params_array = np.array([omega_m, omega_ee, w])
+
+    initial_guess = [0.6, 0.3]  # omega_m, omega_ee
+
+    mins_w, evol_w, cov_w = find_mins(h0, fl_name, c_dll, params_array, omega_ee, omega_m,
+                                      initial_guess, remap=False, prints=False, name=name_w, prior=True)
+
+    all_plots(evol_w, mins_w, cov_w, name=name_w, save=True)
+
+
 def item_d():
     fl_name = "SN_2021.cat"
     c_name = "chi.so.1"
     h0 = 70
-    map_len = 200
+    map_len = 500
 
     c_dll = config_c_call(c_name)
 
@@ -785,12 +980,15 @@ def item_d():
     initial_guess = [0.4, -0.5]  # omega_m, w
 
     mins_w, evol_w, cov_w = find_mins(h0, fl_name, c_dll, params_array, w, omega_m,
-                                      initial_guess, remap=False, prints=True, name=name_omEE,
+                                      initial_guess, remap=False, prints=False, name=name_omEE,
                                       d=True)
 
     all_plots(evol_w, mins_w, cov_w, name=name_omEE, save=True, d=True)
 
 
 if __name__ == '__main__':
-    #main()
-    item_d()
+    main()
+    # item_a()
+    # item_b()
+    # item_c()
+    # item_d()
