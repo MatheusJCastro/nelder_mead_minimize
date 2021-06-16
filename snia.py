@@ -178,14 +178,14 @@ def map_chi(h0, data, params_array, c_lib, fl_name, name="", precision=1E-10, pr
     map_array = np.array(map_array)
 
     head = "Mapa de chi2"
-    np.savetxt("Map_chi2{}.csv".format(name), map_array, header=head, fmt="%f", delimiter=",")
+    np.savetxt("all_csv_map/Map_chi2{}.csv".format(name), map_array, header=head, fmt="%f", delimiter=",")
 
     save_params = [["parametro", "min", "max"],
                    ["omega_m", params_array[0][0], params_array[0][-1]],
                    ["omega_ee", params_array[1][0], params_array[1][-1]],
                    ["w", params_array[2][0], params_array[2][-1]]]
     head = "Parâmetros do Mapa de chi2"
-    np.savetxt("Param_map_chi2{}.csv".format(name), save_params, header=head, fmt="%s", delimiter=",")
+    np.savetxt("all_csv_map/Param_map_chi2{}.csv".format(name), save_params, header=head, fmt="%s", delimiter=",")
 
 
 def map_chi_d(h0, data, omega_m, omega_ee, w, c_lib, fl_name, name="", precision=1E-10):
@@ -206,7 +206,7 @@ def map_chi_d(h0, data, omega_m, omega_ee, w, c_lib, fl_name, name="", precision
     map_array = np.array(map_array)  # transforma mapa de lista para array
 
     head = "Mapa de chi2"
-    np.savetxt("Map_chi2{}.csv".format(name), map_array, header=head, fmt="%f", delimiter=",")  # salva mapa num arquivo
+    np.savetxt("all_csv_map/Map_chi2{}.csv".format(name), map_array, header=head, fmt="%f", delimiter=",")  # salva mapa num arquivo
 
     # range de valores usados para construir o mapa de chi2
     save_params = [["parametro", "min", "max"],
@@ -215,7 +215,7 @@ def map_chi_d(h0, data, omega_m, omega_ee, w, c_lib, fl_name, name="", precision
                    ["w", w[0], w[-1]]]
     head = "Parâmetros do Mapa de chi2"
     # salvando esses valores
-    np.savetxt("Param_map_chi2{}.csv".format(name), save_params, header=head, fmt="%s", delimiter=",")
+    np.savetxt("all_csv_map/Param_map_chi2{}.csv".format(name), save_params, header=head, fmt="%s", delimiter=",")
 
 
 def cov_elipses(cov):
@@ -296,7 +296,7 @@ def plot_map(data, params, cov, min_chi=None, min_map=None, triangle=None, show=
     plt.legend(loc="upper right", bbox_to_anchor=(1, 1))
 
     if save:
-        plt.savefig("mapping_chi2{}".format(name))
+        plt.savefig("all_mapping/mapping_chi2{}".format(name))
     if show:
         plt.show()
     plt.close()
@@ -338,7 +338,7 @@ def plot_movie(data, params, all_dots, save_mp4=False, show=False, name="", d=Fa
     plt.legend(loc="upper right", bbox_to_anchor=(1, 1))
 
     if save_mp4:  # salva como mp4
-        ani.save("evolution_params{}.mp4".format(name), writer="ffmpeg", fps=len(all_dots) / 8)
+        ani.save("all_movies/evolution_params{}.mp4".format(name), writer="ffmpeg", fps=len(all_dots) / 8)
     if show:
         plt.show()
     plt.close()
@@ -373,7 +373,7 @@ def plot_mead(data, params, all_dots, save=False, show=False, name="", d=False):
             plt.plot(triangle[1], triangle[0], "-")
 
     if save:
-        plt.savefig("evolution_Nelder_Mead{}".format(name))
+        plt.savefig("all_evolution_simplex/evolution_Nelder_Mead{}".format(name))
     if show:
         plt.show()
     plt.close()
@@ -392,8 +392,8 @@ def all_plots(evolution_dots, mins, cov, name="", save=True, show=False, d=False
 
 
 def open_map(fl_data, fl_param, name=""):
-    data = np.loadtxt("{}{}.csv".format(fl_data, name), skiprows=1, delimiter=",")
-    params = np.loadtxt("{}{}.csv".format(fl_param, name), skiprows=2,
+    data = np.loadtxt("all_csv_map/{}{}.csv".format(fl_data, name), skiprows=1, delimiter=",")
+    params = np.loadtxt("all_csv_map/{}{}.csv".format(fl_param, name), skiprows=2,
                         delimiter=",", dtype="str").T[1:3].T.astype(np.float)
 
     return data, params
@@ -763,7 +763,7 @@ def main():
         text += "    none, {:<10}, {:>8.5f}, {:>8.5f}, {:>8.5f}\n" \
                 "".format(i, mins_var[i][0], mins_var[i][1], mins_var[i][2])
 
-    np.savetxt("Minimos_fake_data.csv", [text], header=head, fmt="%s")
+    np.savetxt("results_files/Minimos_fake_data.csv", [text], header=head, fmt="%s")
 
     for i in range(len(all_mins)):
         all_plots(all_dots[i], all_mins[i], all_covs[i], name=names[i])
@@ -882,7 +882,7 @@ def item_a():
     plt.legend()  # legendas
     plt.grid()  # grade
 
-    plt.savefig("mapping_chi2_itema")  # salvando a imagem da curva
+    plt.savefig("all_mapping/mapping_chi2_itema")  # salvando a imagem da curva
     plt.close()
 
     lines = ['-', '--', '-.']  # tipos das linhas dos intervalos de Δχ²
@@ -905,7 +905,7 @@ def item_a():
     plt.legend()  # legendas
     plt.grid()  # grade
 
-    plt.savefig("fdp_itema")  # salvando a imagem da curva
+    plt.savefig("all_mapping/fdp_itema")  # salvando a imagem da curva
     plt.close()
 
     head = 'sigma, x, sig_xl, sig_xr'  # header do arquivo que armazenará os dados
@@ -916,7 +916,7 @@ def item_a():
     save += "prob_cumulativa, {:.4f},,\n".format(prob_cumulativa1)
     save += "prob_cumulativa_scipy, {:.4f},,\n".format(prob_cumulativa2)
 
-    np.savetxt("Minimo_Nelder_Incerteza_itema.csv", [save], header=head, fmt="%s")
+    np.savetxt("results_files/Minimo_Nelder_Incerteza_itema.csv", [save], header=head, fmt="%s")
 
 
 def item_b():
