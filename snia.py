@@ -1,7 +1,7 @@
 ###################################################
 # Nelder-Mead Minimization (and a lot more)       #
 # Matheus J. Castro                               #
-# Version 4.4                                     #
+# Version 4.5                                     #
 # Last Modification: 06/11/2021 (month/day/year)  #
 ###################################################
 
@@ -208,7 +208,8 @@ def map_chi_d(h0, data, omega_m, omega_ee, w, c_lib, fl_name, name="", precision
     map_array = np.array(map_array)  # transforma mapa de lista para array
 
     head = "Mapa de chi2"
-    np.savetxt("all_csv_map/Map_chi2{}.csv".format(name), map_array, header=head, fmt="%f", delimiter=",")  # salva mapa num arquivo
+    np.savetxt("all_csv_map/Map_chi2{}.csv".format(name), map_array, header=head, fmt="%f",
+               delimiter=",")  # salva mapa num arquivo
 
     # range de valores usados para construir o mapa de chi2
     save_params = [["parametro", "min", "max"],
@@ -257,8 +258,8 @@ def plot_map(data, params, cov, cpnm, min_chi=None, min_map=None, triangle=None,
     ax = fig.add_subplot(111)
 
     plt.title("Mapeamento do \u03c7\u00b2", fontsize=18)
-    plt.xlabel(xlab, fontsize=20)
-    plt.ylabel(ylab, fontsize=20)
+    plt.xlabel(xlab, fontsize=18)
+    plt.ylabel(ylab, fontsize=18)
     plt.xlim(im_range[0], im_range[1])
     plt.ylim(im_range[2], im_range[3])
 
@@ -311,8 +312,8 @@ def plot_movie(data, params, all_dots, cpnm, save_mp4=False, show=False, name=""
     fig = plt.figure(figsize=(16, 9))
 
     plt.title("Evolução dos Simplex no Mapeamento do \u03c7\u00b2", fontsize=18)
-    plt.xlabel(xlab, fontsize=20)
-    plt.ylabel(ylab, fontsize=20)
+    plt.xlabel(xlab, fontsize=18)
+    plt.ylabel(ylab, fontsize=18)
     plt.xlim(im_range[0], im_range[1])
     plt.ylim(im_range[2], im_range[3])
 
@@ -356,8 +357,8 @@ def plot_mead(data, params, all_dots, cpnm, save=False, show=False, name="", d=F
     plt.figure(figsize=(16, 9))
 
     plt.title("Evolução do Algorítimo de Nelder-Mead a cada duas Iterações", fontsize=18)
-    plt.xlabel(xlab, fontsize=20)
-    plt.ylabel(ylab, fontsize=20)
+    plt.xlabel(xlab, fontsize=18)
+    plt.ylabel(ylab, fontsize=18)
 
     plt.imshow(data, origin="lower", extent=im_range, aspect="auto", interpolation="none",
                cmap=cpnm[0])
@@ -1003,9 +1004,62 @@ def item_d():
     all_plots(evol_w, mins_w, cov_w, name=name_omEE, save=True, d=True)
 
 
+def mult_fit():
+    fls_names = ["SN_2021.cat", "fake_data.cat"]
+    c_name = "chi.so.1"
+    h0 = 70
+
+    doublarray = np.ctypeslib.ndpointer(dtype=np.float64, ndim=1, flags='C')
+
+    c_dll = config_c_call(c_name)
+    c_dll.lumin_dist_mod_func.argtypes = [ctypes.c_double, ctypes.c_double,
+                                          doublarray, ctypes.c_double]
+    c_dll.lumin_dist_mod_func.restype = ctypes.c_double
+
+    for fl_name in fls_names:
+        data = read_fl(fl_name)
+
+        def call_c_red_3(xyz):
+            omM = xyz[0]
+            omEE = xyz[1]
+            W = xyz[2]
+            return call_c(c_dll, fl_name, h0, omM, omEE, W, 1E-5, len(data[0]))
+
+        initial_guess = np.array([0.5, 0.5, -0.5])  # omega_m, omega_ee, w
+
+        min_nel, evolution_dots, envolution_min = opt_nelder_mead(call_c_red_3, initial_guess)
+
+        modist = []
+        x = np.linspace(min(data[0]) * 0.8, max(data[0]) * 1.05, 1000)
+        for i in x:
+            mu = c_dll.lumin_dist_mod_func(h0, i, min_nel, 1E-3)
+            modist.append(mu)
+
+        plt.figure(figsize=(16, 9))
+
+        name = "Ajuste Simultâneo para os dados \"{}\"\n".format(fl_name) + \
+               "\u03a9\u2098={:.4f}, \u03a9\u2091\u2091={:.4f}, w={:.4f}".format(min_nel[0], min_nel[1], min_nel[2])
+
+        plt.title(name, fontsize=20)
+        plt.xlabel(r"Redshift $z$", fontsize=20)
+        plt.ylabel(r"Módulo de Distância $\mu$", fontsize=20)
+
+        plt.errorbar(data[0], data[1], yerr=data[2], fmt="o", zorder=1, markersize=4,
+                     ecolor="red", color="blue", label="Dados {}".format(fl_name))
+        plt.plot(x, modist, "-", c="black", zorder=2, linewidth=3, label="Curva de Ajuste")
+
+        plt.legend()
+        plt.grid()
+
+        plt.savefig("fit_all_{}".format(fl_name[:-4]))
+        plt.close()
+
+
 if __name__ == '__main__':
-    main()
+    # main()
     # item_a()
     # item_b()
     # item_c()
     # item_d()
+    mult_fit()
+
