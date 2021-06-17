@@ -746,41 +746,41 @@ def main():
     all_covs.append(cov_omEE)
 
     # todos variaveis
-    # print("Todas variáveis")
-    # data = read_fl(fl_name)
-    #
-    # def call_c_red_3(xyz):
-    #     omM = xyz[0]
-    #     omEE = xyz[1]
-    #     W = xyz[2]
-    #     return call_c(c_dll, fl_name, h0, omM, omEE, W, 1E-5, len(data[0]))
-    #
-    # initial_guess = [0.5, 0.5, -0.5]  # omega_m, omega_ee, w
-    #
-    # min_nel, evolution_dots, envolution_min = opt_nelder_mead(call_c_red_3, initial_guess)
-    # min_sci = minimize(call_c_red_3, np.array(initial_guess), method='nelder-mead').x
-    #
-    # mins_var = {"Min_Nelder": min_nel,
-    #             "Min_SciPy": min_sci}
-    #
-    # # salvando os mínimos
-    # head = "param constante, método, valor x, valor y, valor z"
-    # text = ""
-    #
-    # for i in mins_w.keys():
-    #     text += "    w=-1, {:<10}, {:>8.5f}, {:>8.5f},       -1\n" \
-    #             "".format(i, mins_w[i][1], mins_w[i][0])
-    # for i in mins_omM.keys():
-    #     text += " omM=0.3, {:<10}, {:>8.5f}, {:>8.5f},      0.3\n" \
-    #             "".format(i, mins_omM[i][1], mins_omM[i][0])
-    # for i in mins_omEE.keys():
-    #     text += "omEE=0.7, {:<10}, {:>8.5f}, {:>8.5f},      0.7\n" \
-    #             "".format(i, mins_omEE[i][1], mins_omEE[i][0])
-    # for i in mins_var.keys():
-    #     text += "    none, {:<10}, {:>8.5f}, {:>8.5f}, {:>8.5f}\n" \
-    #             "".format(i, mins_var[i][0], mins_var[i][1], mins_var[i][2])
-    #
-    # np.savetxt("results_files/Minimos_fake_data.csv", [text], header=head, fmt="%s")
+    print("Todas variáveis")
+    data = read_fl(fl_name)
+
+    def call_c_red_3(xyz):
+        omM = xyz[0]
+        omEE = xyz[1]
+        W = xyz[2]
+        return call_c(c_dll, fl_name, h0, omM, omEE, W, 1E-5, len(data[0]))
+
+    initial_guess = [0.5, 0.5, -0.5]  # omega_m, omega_ee, w
+
+    min_nel, evolution_dots, envolution_min = opt_nelder_mead(call_c_red_3, initial_guess)
+    min_sci = minimize(call_c_red_3, np.array(initial_guess), method='nelder-mead').x
+
+    mins_var = {"Min_Nelder": min_nel,
+                "Min_SciPy": min_sci}
+
+    # salvando os mínimos
+    head = "param constante, método, valor x, valor y, valor z"
+    text = ""
+
+    for i in mins_w.keys():
+        text += "    w=-1, {:<10}, {:>8.5f}, {:>8.5f},       -1\n" \
+                "".format(i, mins_w[i][1], mins_w[i][0])
+    for i in mins_omM.keys():
+        text += " omM=0.3, {:<10}, {:>8.5f}, {:>8.5f},      0.3\n" \
+                "".format(i, mins_omM[i][1], mins_omM[i][0])
+    for i in mins_omEE.keys():
+        text += "omEE=0.7, {:<10}, {:>8.5f}, {:>8.5f},      0.7\n" \
+                "".format(i, mins_omEE[i][1], mins_omEE[i][0])
+    for i in mins_var.keys():
+        text += "    none, {:<10}, {:>8.5f}, {:>8.5f}, {:>8.5f}\n" \
+                "".format(i, mins_var[i][0], mins_var[i][1], mins_var[i][2])
+
+    np.savetxt("results_files/Minimos_fake_data.csv", [text], header=head, fmt="%s")
 
     for i in range(len(all_mins)):
         all_plots(all_dots[i], all_mins[i], all_covs[i], name=names[i])
