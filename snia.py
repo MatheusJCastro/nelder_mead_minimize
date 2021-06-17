@@ -295,7 +295,7 @@ def plot_map(data, params, cov, cpnm, min_chi=None, min_map=None, triangle=None,
     plt.close()
 
 
-def plot_movie(data, params, all_dots, cpnm, save_mp4=False, show=False, name="", d=False):
+def plot_movie(data, params, all_dots, save_mp4=False, show=False, name="", d=False):
     if params[0][0] == params[0][1]:
         im_range = [params[2][0], params[2][1], params[1][0], params[1][1]]
         xlab = "w"
@@ -318,10 +318,10 @@ def plot_movie(data, params, all_dots, cpnm, save_mp4=False, show=False, name=""
     plt.ylim(im_range[2], im_range[3])
 
     plt.imshow(data, origin="lower", extent=im_range, aspect="auto", interpolation="none",
-               cmap=cpnm[0])
+               cmap="Spectral")
 
-    cb = plt.colorbar(mpl.cm.ScalarMappable(cmap=cpnm[0], norm=cpnm[1]))
-    cb.set_label(label=r"Intervalos de $\sigma$ - Mapeamento", fontsize=14)
+    cb = plt.colorbar()
+    cb.set_label(label=r"Valores de $\chi^2$", fontsize=14)
 
     triangle = np.append(all_dots[0], [all_dots[0][0]], axis=0).T
     mov, = plt.plot(triangle[1], triangle[0], "-", c="black", label="Evolução Nelder-Mead")
@@ -340,7 +340,7 @@ def plot_movie(data, params, all_dots, cpnm, save_mp4=False, show=False, name=""
     plt.close()
 
 
-def plot_mead(data, params, all_dots, cpnm, save=False, show=False, name="", d=False):
+def plot_mead(data, params, all_dots, save=False, show=False, name="", d=False):
     if params[0][0] == params[0][1]:
         im_range = [params[2][0], params[2][1], params[1][0], params[1][1]]
         xlab = "w"
@@ -361,10 +361,10 @@ def plot_mead(data, params, all_dots, cpnm, save=False, show=False, name="", d=F
     plt.ylabel(ylab, fontsize=18)
 
     plt.imshow(data, origin="lower", extent=im_range, aspect="auto", interpolation="none",
-               cmap=cpnm[0])
+               cmap="Spectral")
 
-    cb = plt.colorbar(mpl.cm.ScalarMappable(cmap=cpnm[0], norm=cpnm[1]))
-    cb.set_label(label=r"Intervalos de $\sigma$ - Mapeamento", fontsize=14)
+    cb = plt.colorbar()
+    cb.set_label(label=r"Valores de $\chi^2$", fontsize=14)
 
     for i in range(len(all_dots)):
         if i % 2 == 0:
@@ -392,6 +392,9 @@ def all_plots(evolution_dots, mins, cov, name="", save=True, show=False, d=False
 
     mapped, params = open_map("Map_chi2", "Param_map_chi2", name=name)
 
+    plot_mead(mapped, params, evolution_dots, save=save, show=show, name=name, d=d)
+    plot_movie(mapped, params, evolution_dots, save_mp4=save, show=show, name=name, d=d)
+
     min_data = np.min(mapped)
     for i in range(len(mapped)):
         for j in range(len(mapped[0])):
@@ -405,8 +408,6 @@ def all_plots(evolution_dots, mins, cov, name="", save=True, show=False, d=False
                 mapped[i][j] = 1
 
     plot_map(mapped, params, cov, cpnm, min_chi=min_nel, min_map=min_map, save=save, show=show, name=name, d=d)
-    plot_mead(mapped, params, evolution_dots, cpnm, save=save, show=show, name=name, d=d)
-    plot_movie(mapped, params, evolution_dots, cpnm, save_mp4=save, show=show, name=name, d=d)
 
 
 def open_map(fl_data, fl_param, name=""):
@@ -594,7 +595,7 @@ def find_uncert(cov, mins, name=""):
     lims = np.array(lims)
 
     head = "sigma, x, sig_x, y, sig_y"
-    np.savetxt("Minimo_Nelder_Incerteza{}.csv".format(name), [save], header=head, fmt="%s")
+    np.savetxt("results_files/Minimo_Nelder_Incerteza{}.csv".format(name), [save], header=head, fmt="%s")
 
     return lims, meanxy
 
@@ -1016,6 +1017,10 @@ def mult_fit():
                                           doublarray, ctypes.c_double]
     c_dll.lumin_dist_mod_func.restype = ctypes.c_double
 
+    all_data = []
+    all_mins = []
+    all_x = []
+    all_modist = []
     for fl_name in fls_names:
         data = read_fl(fl_name)
 
@@ -1035,31 +1040,39 @@ def mult_fit():
             mu = c_dll.lumin_dist_mod_func(h0, i, min_nel, 1E-3)
             modist.append(mu)
 
+        all_data.append(data)
+        all_mins.append(min_nel)
+        all_x.append(x)
+        all_modist.append(modist)
+
+    for i in range(len(fls_names)):
         plt.figure(figsize=(16, 9))
 
-        name = "Ajuste Simultâneo para os dados \"{}\"\n".format(fl_name) + \
-               "\u03a9\u2098={:.4f}, \u03a9\u2091\u2091={:.4f}, w={:.4f}".format(min_nel[0], min_nel[1], min_nel[2])
+        name = "Ajuste Simultâneo para os dados \"{}\"\n".format(fls_names[i]) + \
+               "\u03a9\u2098={:.4f}, \u03a9\u2091\u2091={:.4f}, w={:.4f}".format(all_mins[i][0],
+                                                                                 all_mins[i][1],
+                                                                                 all_mins[i][2])
 
         plt.title(name, fontsize=20)
         plt.xlabel(r"Redshift $z$", fontsize=20)
         plt.ylabel(r"Módulo de Distância $\mu$", fontsize=20)
 
-        plt.errorbar(data[0], data[1], yerr=data[2], fmt="o", zorder=1, markersize=4,
-                     ecolor="red", color="blue", label="Dados {}".format(fl_name))
-        plt.plot(x, modist, "-", c="black", zorder=2, linewidth=3, label="Curva de Ajuste")
+        plt.errorbar(all_data[i][0], all_data[i][1], yerr=all_data[i][2], fmt="o", zorder=1, markersize=4,
+                     ecolor="red", color="blue", label="Dados {}".format(fls_names[i]))
+        plt.plot(all_x[i], all_modist[i], "-", c="black", zorder=2, linewidth=3, label="Curva de Ajuste")
 
         plt.legend()
         plt.grid()
 
-        plt.savefig("fit_all_{}".format(fl_name[:-4]))
+        plt.savefig("fit_all_{}".format(fls_names[i][:-4]))
         plt.close()
 
 
 if __name__ == '__main__':
-    # main()
+    main()
     # item_a()
     # item_b()
     # item_c()
     # item_d()
-    mult_fit()
+    # mult_fit()
 
