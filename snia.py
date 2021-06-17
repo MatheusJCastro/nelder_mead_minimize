@@ -359,6 +359,8 @@ def plot_mead(data, params, all_dots, save=False, show=False, name="", d=False):
     plt.title("Evolução do Algorítimo de Nelder-Mead a cada duas Iterações", fontsize=18)
     plt.xlabel(xlab, fontsize=18)
     plt.ylabel(ylab, fontsize=18)
+    plt.xlim(im_range[0], im_range[1])
+    plt.ylim(im_range[2], im_range[3])
 
     plt.imshow(data, origin="lower", extent=im_range, aspect="auto", interpolation="none",
                cmap="Spectral")
