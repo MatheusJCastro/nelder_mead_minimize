@@ -1,7 +1,7 @@
 ###################################################
 # Fake Cosmological Data Generator                #
 # Matheus J. Castro                               #
-# Version 1.2                                     #
+# Version 1.3                                     #
 # Last Modification: 06/11/2021 (month/day/year)  #
 ###################################################
 
@@ -25,7 +25,7 @@ for i in zs:
     data.append(snia.lumin_dist_mod_func(h0, i, omega_m, omega_ee, w, show=False, precision=1E-10)[1])
 
 # np.random.seed(int(strftime("%m%d%H%M%S", gmtime())))
-# errors = np.abs(np.random.normal(np.mean(errors), np.std(errors), len(errors)))
+# errors = np.abs(np.random.normal(data, np.std(errors), len(errors)))
 
 data_to_save = np.array([zs, data, errors]).T
 head = "redshift modulo_de_distancia erro_do_mod_dist"

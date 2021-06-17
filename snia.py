@@ -1,7 +1,7 @@
 ###################################################
 # Nelder-Mead Minimization (and a lot more)       #
 # Matheus J. Castro                               #
-# Version 4.3                                     #
+# Version 4.4                                     #
 # Last Modification: 06/11/2021 (month/day/year)  #
 ###################################################
 
@@ -310,7 +310,7 @@ def plot_movie(data, params, all_dots, cpnm, save_mp4=False, show=False, name=""
 
     fig = plt.figure(figsize=(16, 9))
 
-    plt.title("Mapeamento do \u03c7\u00b2", fontsize=18)
+    plt.title("Evolução dos Simplex no Mapeamento do \u03c7\u00b2", fontsize=18)
     plt.xlabel(xlab, fontsize=20)
     plt.ylabel(ylab, fontsize=20)
     plt.xlim(im_range[0], im_range[1])
