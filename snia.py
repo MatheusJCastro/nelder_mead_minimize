@@ -1,15 +1,17 @@
 ###################################################
 # Nelder-Mead Minimization (and a lot more)       #
 # Matheus J. Castro                               #
-# Version 3.4                                     #
+# Version 4.3                                     #
 # Last Modification: 06/11/2021 (month/day/year)  #
 ###################################################
 
-from scipy.integrate import quad
-from scipy.optimize import minimize
-from matplotlib import animation
+from matplotlib.colors import LinearSegmentedColormap
 from matplotlib import patches as ptc
+from scipy.optimize import minimize
+from scipy.integrate import quad
+from matplotlib import animation
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 import numpy as np
 import ctypes
 import sys
@@ -236,7 +238,7 @@ def cov_elipses(cov):
     return a, b, theta
 
 
-def plot_map(data, params, cov, min_chi=None, min_map=None, triangle=None, show=False,
+def plot_map(data, params, cov, cpnm, min_chi=None, min_map=None, triangle=None, show=False,
              save=False, name="", d=False):
     if params[0][0] == params[0][1]:
         im_range = [params[2][0], params[2][1], params[1][0], params[1][1]]
@@ -260,21 +262,11 @@ def plot_map(data, params, cov, min_chi=None, min_map=None, triangle=None, show=
     plt.xlim(im_range[0], im_range[1])
     plt.ylim(im_range[2], im_range[3])
 
-    # min_data = np.min(data)
-    # for i in range(len(data)):
-    #     for j in range(len(data[0])):
-    #         if data[i][j] > 11.8+min_data:
-    #             data[i][j] = 4
-    #         elif data[i][j] > 6.17+min_data:
-    #             data[i][j] = 3
-    #         elif data[i][j] > 2.3+min_data:
-    #             data[i][j] = 2
-    #         else:
-    #             data[i][j] = 1
-
     plt.imshow(data, origin="lower", extent=im_range, aspect="auto", interpolation="none",
-               cmap="Spectral")
-    plt.colorbar()
+               cmap=cpnm[0])
+
+    cb = plt.colorbar(mpl.cm.ScalarMappable(cmap=cpnm[0], norm=cpnm[1]))
+    cb.set_label(label=r"Intervalos de $\sigma$ - Mapeamento", fontsize=14)
 
     if min_chi is not None:
         plt.scatter(min_chi[1], min_chi[0], c="black", label="Mínimo Nelder-Mead")
@@ -290,10 +282,10 @@ def plot_map(data, params, cov, min_chi=None, min_map=None, triangle=None, show=
 
     for i in range(len(alphas)):
         e = ptc.Ellipse((min_chi[1], min_chi[0]), alphas[i] * a, alphas[i] * b, theta, ls=lines[i], zorder=5,
-                        fill=False, label=r"{}$\sigma$".format(i + 1))
+                        fill=False, label=r"{}$\sigma$ - Matriz de Fisher".format(i + 1))
         ax.add_patch(e)
 
-    plt.legend(loc="upper right", bbox_to_anchor=(1, 1))
+    plt.legend(loc="upper right", bbox_to_anchor=(1, 1), fontsize=14)
 
     if save:
         plt.savefig("all_mapping/mapping_chi2{}".format(name))
@@ -302,7 +294,7 @@ def plot_map(data, params, cov, min_chi=None, min_map=None, triangle=None, show=
     plt.close()
 
 
-def plot_movie(data, params, all_dots, save_mp4=False, show=False, name="", d=False):
+def plot_movie(data, params, all_dots, cpnm, save_mp4=False, show=False, name="", d=False):
     if params[0][0] == params[0][1]:
         im_range = [params[2][0], params[2][1], params[1][0], params[1][1]]
         xlab = "w"
@@ -324,8 +316,11 @@ def plot_movie(data, params, all_dots, save_mp4=False, show=False, name="", d=Fa
     plt.xlim(im_range[0], im_range[1])
     plt.ylim(im_range[2], im_range[3])
 
-    plt.imshow(data, origin="lower", extent=im_range, aspect="auto", interpolation="none", cmap="Spectral")
-    plt.colorbar()
+    plt.imshow(data, origin="lower", extent=im_range, aspect="auto", interpolation="none",
+               cmap=cpnm[0])
+
+    cb = plt.colorbar(mpl.cm.ScalarMappable(cmap=cpnm[0], norm=cpnm[1]))
+    cb.set_label(label=r"Intervalos de $\sigma$ - Mapeamento", fontsize=14)
 
     triangle = np.append(all_dots[0], [all_dots[0][0]], axis=0).T
     mov, = plt.plot(triangle[1], triangle[0], "-", c="black", label="Evolução Nelder-Mead")
@@ -344,7 +339,7 @@ def plot_movie(data, params, all_dots, save_mp4=False, show=False, name="", d=Fa
     plt.close()
 
 
-def plot_mead(data, params, all_dots, save=False, show=False, name="", d=False):
+def plot_mead(data, params, all_dots, cpnm, save=False, show=False, name="", d=False):
     if params[0][0] == params[0][1]:
         im_range = [params[2][0], params[2][1], params[1][0], params[1][1]]
         xlab = "w"
@@ -364,8 +359,11 @@ def plot_mead(data, params, all_dots, save=False, show=False, name="", d=False):
     plt.xlabel(xlab, fontsize=20)
     plt.ylabel(ylab, fontsize=20)
 
-    plt.imshow(data, origin="lower", extent=im_range, aspect="auto", interpolation="none", cmap="Spectral")
-    plt.colorbar()
+    plt.imshow(data, origin="lower", extent=im_range, aspect="auto", interpolation="none",
+               cmap=cpnm[0])
+
+    cb = plt.colorbar(mpl.cm.ScalarMappable(cmap=cpnm[0], norm=cpnm[1]))
+    cb.set_label(label=r"Intervalos de $\sigma$ - Mapeamento", fontsize=14)
 
     for i in range(len(all_dots)):
         if i % 2 == 0:
@@ -385,10 +383,29 @@ def all_plots(evolution_dots, mins, cov, name="", save=True, show=False, d=False
     min_nel = mins["Min_Nelder"]
     min_map = mins["Min_Map"]
 
+    colors = [(0, 0.5, 1), (0, 0.75, 1), (0, 1, 1)]
+    cmap = LinearSegmentedColormap.from_list("rgb", colors, N=3)
+    bounds = [0.000, 0.683, 0.954, 0.997]
+    norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
+    cpnm = [cmap, norm]
+
     mapped, params = open_map("Map_chi2", "Param_map_chi2", name=name)
-    plot_map(mapped, params, cov, min_chi=min_nel, min_map=min_map, save=save, show=show, name=name, d=d)
-    plot_mead(mapped, params, evolution_dots, save=save, show=show, name=name, d=d)
-    plot_movie(mapped, params, evolution_dots, save_mp4=save, show=show, name=name, d=d)
+
+    min_data = np.min(mapped)
+    for i in range(len(mapped)):
+        for j in range(len(mapped[0])):
+            if mapped[i][j] > 11.8 + min_data:
+                mapped[i][j] = None
+            elif mapped[i][j] > 6.17 + min_data:
+                mapped[i][j] = 3
+            elif mapped[i][j] > 2.3 + min_data:
+                mapped[i][j] = 2
+            else:
+                mapped[i][j] = 1
+
+    plot_map(mapped, params, cov, cpnm, min_chi=min_nel, min_map=min_map, save=save, show=show, name=name, d=d)
+    plot_mead(mapped, params, evolution_dots, cpnm, save=save, show=show, name=name, d=d)
+    plot_movie(mapped, params, evolution_dots, cpnm, save_mp4=save, show=show, name=name, d=d)
 
 
 def open_map(fl_data, fl_param, name=""):
@@ -720,7 +737,7 @@ def main():
     w = np.linspace(-2, 0, map_len)
     params_array = np.array([omega_m, omega_ee, w])
 
-    initial_guess = [0.4, -0.5]  # omega_m, w
+    initial_guess = [0.35, -0.75]  # omega_m, w
 
     mins_omEE, evol_omEE, cov_omEE = find_mins(h0, fl_name, c_dll, params_array, w, omega_m,
                                                initial_guess, remap=False, prints=False, name=names[2])
@@ -729,41 +746,41 @@ def main():
     all_covs.append(cov_omEE)
 
     # todos variaveis
-    print("Todas variáveis")
-    data = read_fl(fl_name)
-
-    def call_c_red_3(xyz):
-        omM = xyz[0]
-        omEE = xyz[1]
-        W = xyz[2]
-        return call_c(c_dll, fl_name, h0, omM, omEE, W, 1E-5, len(data[0]))
-
-    initial_guess = [0.5, 0.5, -0.5]  # omega_m, omega_ee, w
-
-    min_nel, evolution_dots, envolution_min = opt_nelder_mead(call_c_red_3, initial_guess)
-    min_sci = minimize(call_c_red_3, np.array(initial_guess), method='nelder-mead').x
-
-    mins_var = {"Min_Nelder": min_nel,
-                "Min_SciPy": min_sci}
-
-    # salvando os mínimos
-    head = "param constante, método, valor x, valor y, valor z"
-    text = ""
-
-    for i in mins_w.keys():
-        text += "    w=-1, {:<10}, {:>8.5f}, {:>8.5f},       -1\n" \
-                "".format(i, mins_w[i][1], mins_w[i][0])
-    for i in mins_omM.keys():
-        text += " omM=0.3, {:<10}, {:>8.5f}, {:>8.5f},      0.3\n" \
-                "".format(i, mins_omM[i][1], mins_omM[i][0])
-    for i in mins_omEE.keys():
-        text += "omEE=0.7, {:<10}, {:>8.5f}, {:>8.5f},      0.7\n" \
-                "".format(i, mins_omEE[i][1], mins_omEE[i][0])
-    for i in mins_var.keys():
-        text += "    none, {:<10}, {:>8.5f}, {:>8.5f}, {:>8.5f}\n" \
-                "".format(i, mins_var[i][0], mins_var[i][1], mins_var[i][2])
-
-    np.savetxt("results_files/Minimos_fake_data.csv", [text], header=head, fmt="%s")
+    # print("Todas variáveis")
+    # data = read_fl(fl_name)
+    #
+    # def call_c_red_3(xyz):
+    #     omM = xyz[0]
+    #     omEE = xyz[1]
+    #     W = xyz[2]
+    #     return call_c(c_dll, fl_name, h0, omM, omEE, W, 1E-5, len(data[0]))
+    #
+    # initial_guess = [0.5, 0.5, -0.5]  # omega_m, omega_ee, w
+    #
+    # min_nel, evolution_dots, envolution_min = opt_nelder_mead(call_c_red_3, initial_guess)
+    # min_sci = minimize(call_c_red_3, np.array(initial_guess), method='nelder-mead').x
+    #
+    # mins_var = {"Min_Nelder": min_nel,
+    #             "Min_SciPy": min_sci}
+    #
+    # # salvando os mínimos
+    # head = "param constante, método, valor x, valor y, valor z"
+    # text = ""
+    #
+    # for i in mins_w.keys():
+    #     text += "    w=-1, {:<10}, {:>8.5f}, {:>8.5f},       -1\n" \
+    #             "".format(i, mins_w[i][1], mins_w[i][0])
+    # for i in mins_omM.keys():
+    #     text += " omM=0.3, {:<10}, {:>8.5f}, {:>8.5f},      0.3\n" \
+    #             "".format(i, mins_omM[i][1], mins_omM[i][0])
+    # for i in mins_omEE.keys():
+    #     text += "omEE=0.7, {:<10}, {:>8.5f}, {:>8.5f},      0.7\n" \
+    #             "".format(i, mins_omEE[i][1], mins_omEE[i][0])
+    # for i in mins_var.keys():
+    #     text += "    none, {:<10}, {:>8.5f}, {:>8.5f}, {:>8.5f}\n" \
+    #             "".format(i, mins_var[i][0], mins_var[i][1], mins_var[i][2])
+    #
+    # np.savetxt("results_files/Minimos_fake_data.csv", [text], header=head, fmt="%s")
 
     for i in range(len(all_mins)):
         all_plots(all_dots[i], all_mins[i], all_covs[i], name=names[i])
@@ -923,7 +940,7 @@ def item_b():
     fl_name = "SN_2021.cat"
     c_name = "chi.so.1"
     h0 = 70
-    map_len = 500
+    map_len = 1000
 
     c_dll = config_c_call(c_name)
 
@@ -945,7 +962,7 @@ def item_c():
     fl_name = "SN_2021.cat"
     c_name = "chi.so.1"
     h0 = 70
-    map_len = 500
+    map_len = 1000
 
     c_dll = config_c_call(c_name)
 
@@ -967,7 +984,7 @@ def item_d():
     fl_name = "SN_2021.cat"
     c_name = "chi.so.1"
     h0 = 70
-    map_len = 500
+    map_len = 1000
 
     c_dll = config_c_call(c_name)
 
